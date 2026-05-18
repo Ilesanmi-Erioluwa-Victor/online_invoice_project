@@ -1,6 +1,6 @@
-const nodemailer = require('nodemailer');
 const prisma = require('../lib/prisma');
 const generateReceiptPDF = require('./generateReceiptPDF');
+const { createMailTransport, getFromAddress } = require('./mailer');
 
 // formatCurrency receives a numeric amount and returns a Nigerian Naira string for receipt emails.
 function formatCurrency(amount) {
@@ -47,16 +47,10 @@ async function sendReceipt(invoiceId) {
   const businessName = receiptData.business_name || receiptData.full_name;
   const pdfBuffer = await generateReceiptPDF(receiptData);
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const transporter = createMailTransport();
 
   return transporter.sendMail({
-    from: `"${businessName}" <${process.env.EMAIL_USER}>`,
+    from: getFromAddress(businessName),
     to: receiptData.client_email,
     subject: `Receipt for Invoice #${receiptData.invoice_number} - Payment Confirmed`,
     html: `
@@ -72,4 +66,3 @@ async function sendReceipt(invoiceId) {
 }
 
 module.exports = sendReceipt;
-

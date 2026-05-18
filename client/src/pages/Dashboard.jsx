@@ -41,26 +41,26 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-600">Overview of your invoices and payments.</p>
         </div>
-        <div className="flex gap-3">
-          <Link to="/clients" className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Add Client</Link>
-          <Link to="/invoices/create" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Create Invoice</Link>
+        <div className="grid grid-cols-2 gap-3 sm:flex">
+          <Link to="/clients" className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-100">Add Client</Link>
+          <Link to="/invoices/create" className="rounded-lg bg-indigo-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700">Create Invoice</Link>
         </div>
       </div>
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div key={card.label} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <p className="text-sm text-gray-500">{card.label}</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{money.format(Number(card.value || 0))}</p>
+            <p className="mt-2 break-words text-xl font-bold text-gray-900 sm:text-2xl">{money.format(Number(card.value || 0))}</p>
           </div>
         ))}
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">Recent Invoices</h2>
         {loading ? (
           <div className="py-8 text-center text-sm text-gray-500">Loading dashboard data...</div>

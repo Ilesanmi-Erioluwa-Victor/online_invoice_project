@@ -41,7 +41,7 @@ echo "VITE_API_URL=http://localhost:5000" > .env
 
 ### 5. Install dependencies and start backend
 
-```bash
+```**bash**
 cd server
 npm install
 node index.js
@@ -70,6 +70,17 @@ npm run dev
 3. Go to Security > 2-Step Verification > App Passwords.
 4. Generate a new app password for Mail.
 5. Use that 16-character password as `EMAIL_PASS` in your `.env`.
+
+For production, if the host cannot connect through Nodemailer's Gmail shortcut, add explicit SMTP variables in Render:
+
+```text
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=youremail@gmail.com
+SMTP_PASS=your_16_character_app_password
+```
+
+The backend also supports `EMAIL_CONNECTION_TIMEOUT_MS`, `EMAIL_GREETING_TIMEOUT_MS`, and `EMAIL_SOCKET_TIMEOUT_MS` so failed mail connections return quickly instead of keeping the frontend waiting for a long time.
 
 ---
 
@@ -185,4 +196,3 @@ invoicing-app/
 - All currency remains in Nigerian Naira.
 - The project uses plain JavaScript, not TypeScript.
 - No UI component library is used.
-

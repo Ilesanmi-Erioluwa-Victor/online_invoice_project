@@ -1,5 +1,5 @@
-const nodemailer = require('nodemailer');
 const prisma = require('../lib/prisma');
+const { createMailTransport, getFromAddress } = require('./mailer');
 
 // formatCurrency receives a numeric amount and returns a Nigerian Naira string for reminder emails.
 function formatCurrency(amount) {
@@ -26,19 +26,13 @@ async function sendOverdueReminders() {
     include: { client: true, user: true },
   });
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const transporter = createMailTransport();
 
   for (const invoice of overdueInvoices) {
     const businessName = invoice.user.business_name || invoice.user.full_name;
 
     await transporter.sendMail({
-      from: `"${businessName}" <${process.env.EMAIL_USER}>`,
+      from: getFromAddress(businessName),
       to: invoice.client.email,
       subject: `Payment Reminder - Invoice #${invoice.invoice_number} is Overdue`,
       html: `
@@ -60,4 +54,3 @@ async function sendOverdueReminders() {
 }
 
 module.exports = sendOverdueReminders;
-

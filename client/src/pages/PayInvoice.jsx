@@ -61,19 +61,19 @@ export default function PayInvoice() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto max-w-2xl rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+      <div className="mx-auto max-w-2xl rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <p className="text-sm text-gray-500">{invoice.business_name}</p>
-            <h1 className="mt-1 text-2xl font-bold text-gray-900">Invoice #{invoice.invoice_number}</h1>
+            <h1 className="mt-1 break-words text-2xl font-bold text-gray-900">Invoice #{invoice.invoice_number}</h1>
           </div>
           <StatusBadge status={invoice.status} />
         </div>
         {message && <div className="mt-6 rounded-lg bg-green-50 p-3 text-sm text-green-700">Payment Confirmed. Thank you!</div>}
         {error && <div className="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-        <div className="mt-8 rounded-lg bg-gray-50 p-6">
+        <div className="mt-8 rounded-lg bg-gray-50 p-4 sm:p-6">
           <p className="text-sm text-gray-500">Amount Due</p>
-          <p className="mt-2 text-4xl font-bold text-gray-900">{money.format(Number(invoice.total || 0))}</p>
+          <p className="mt-2 break-words text-3xl font-bold text-gray-900 sm:text-4xl">{money.format(Number(invoice.total || 0))}</p>
           <p className="mt-3 text-sm text-gray-600">Due Date: {invoice.due_date?.slice(0, 10)}</p>
         </div>
         <div className="mt-6 space-y-2 text-sm text-gray-700">

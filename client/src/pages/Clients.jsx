@@ -93,8 +93,8 @@ export default function Clients() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
           <p className="text-sm text-gray-600">
             Save client contact details for invoice creation.
@@ -102,7 +102,7 @@ export default function Clients() {
         </div>
         <button
           onClick={startAdd}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto"
         >
           Add Client
         </button>
@@ -116,7 +116,7 @@ export default function Clients() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6"
         >
           <h2 className="mb-4 text-lg font-semibold text-gray-900">
             {editingId ? "Edit Client" : "Add Client"}
@@ -154,7 +154,7 @@ export default function Clients() {
               className="rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-indigo-600"
             />
           </div>
-          <div className="mt-4 flex gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:flex">
             <button
               type="submit"
               disabled={saving}
@@ -177,13 +177,45 @@ export default function Clients() {
         </form>
       )}
 
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         {loading ? (
           <div className="py-8 text-center text-sm text-gray-500">
             Loading clients...
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 md:hidden">
+            {clients.map((client) => (
+              <article key={client.id} className="rounded-lg border border-gray-100 p-4">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-gray-900">{client.client_name}</p>
+                  <p className="truncate text-sm text-gray-600">{client.email}</p>
+                </div>
+                <dl className="mt-3 space-y-1 text-sm text-gray-700">
+                  <div><span className="text-gray-500">Phone: </span>{client.phone || "-"}</div>
+                  <div><span className="text-gray-500">Address: </span>{client.address || "-"}</div>
+                </dl>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => startEdit(client)}
+                    className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deleteClient(client.id)}
+                    className="rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+            {clients.length === 0 && (
+              <div className="py-6 text-center text-sm text-gray-500">No clients saved yet.</div>
+            )}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
@@ -232,6 +264,7 @@ export default function Clients() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

@@ -45,19 +45,20 @@ export default function Reports() {
         <p className="text-sm text-gray-600">Financial summary of your invoice records.</p>
       </div>
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div key={card.label} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
             <p className="text-sm text-gray-500">{card.label}</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{money.format(Number(card.value || 0))}</p>
+            <p className="mt-2 break-words text-xl font-bold text-gray-900 sm:text-2xl">{money.format(Number(card.value || 0))}</p>
           </div>
         ))}
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">Status Breakdown</h2>
         {loading ? (
           <div className="py-8 text-center text-sm text-gray-500">Loading reports...</div>
         ) : (
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -76,6 +77,7 @@ export default function Reports() {
             ))}
           </tbody>
         </table>
+        </div>
         )}
       </div>
     </div>

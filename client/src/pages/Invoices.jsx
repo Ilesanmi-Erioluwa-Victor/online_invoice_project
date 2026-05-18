@@ -54,7 +54,9 @@ export default function Invoices() {
     try {
       await callback();
     } catch (err) {
-      setError(err.response?.data?.message || "Action failed");
+      const serverMessage = err.response?.data?.message;
+      const serverError = err.response?.data?.error;
+      setError(serverError ? `${serverMessage}: ${serverError}` : serverMessage || "Action failed");
     } finally {
       setActionLoading("");
     }
@@ -122,7 +124,7 @@ export default function Invoices() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
         <p className="text-sm text-gray-600">
           View invoices, mark payments, send emails, and manage payment links.
@@ -157,7 +159,7 @@ export default function Invoices() {
           {error}
         </div>
       )}
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {filters.map((filter) => (
           <button
             key={filter}
@@ -172,13 +174,74 @@ export default function Invoices() {
           </button>
         ))}
       </div>
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         {loading ? (
           <div className="py-8 text-center text-sm text-gray-500">
             Loading invoices...
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 md:hidden">
+            {filteredInvoices.map((invoice) => {
+              const isPaid = invoice.status === "paid";
+
+              return (
+                <article key={invoice.id} className="rounded-lg border border-gray-100 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-gray-900">{invoice.invoice_number}</p>
+                      <p className="truncate text-sm text-gray-600">{invoice.client_name}</p>
+                    </div>
+                    <StatusBadge status={invoice.status} />
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <dt className="text-gray-500">Issue</dt>
+                      <dd className="font-medium text-gray-900">{invoice.issue_date?.slice(0, 10)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-500">Due</dt>
+                      <dd className="font-medium text-gray-900">{invoice.due_date?.slice(0, 10)}</dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="text-gray-500">Total</dt>
+                      <dd className="font-medium text-gray-900">{money.format(Number(invoice.total))}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {!isPaid && (
+                      <button
+                        onClick={() => markPaid(invoice.id)}
+                        disabled={actionLoading === `paid-${invoice.id}`}
+                        className="rounded-lg bg-green-500 px-3 py-2 text-xs font-medium text-white hover:bg-green-600 disabled:opacity-70"
+                      >
+                        {actionLoading === `paid-${invoice.id}` ? "Saving..." : "Mark Paid"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => sendInvoice(invoice.id)}
+                      disabled={isPaid || actionLoading === `send-${invoice.id}`}
+                      className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading === `send-${invoice.id}` ? "Sending..." : "Send"}
+                    </button>
+                    <button
+                      onClick={() => deleteInvoice(invoice.id)}
+                      disabled={isPaid || actionLoading === `delete-${invoice.id}`}
+                      className="rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading === `delete-${invoice.id}` ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+            {filteredInvoices.length === 0 && (
+              <div className="py-6 text-center text-sm text-gray-500">No invoices found.</div>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
@@ -192,7 +255,10 @@ export default function Invoices() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredInvoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => {
+                  const isPaid = invoice.status === "paid";
+
+                  return (
                   <tr key={invoice.id}>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {invoice.invoice_number}
@@ -211,7 +277,7 @@ export default function Invoices() {
                       <StatusBadge status={invoice.status} />
                     </td>
                     <td className="flex flex-wrap gap-2 px-4 py-3">
-                      {invoice.status !== "paid" && (
+                      {!isPaid && (
                         <button
                           onClick={() => markPaid(invoice.id)}
                           disabled={actionLoading === `paid-${invoice.id}`}
@@ -246,8 +312,9 @@ export default function Invoices() {
                       </button> */}
                       <button
                         onClick={() => sendInvoice(invoice.id)}
-                        disabled={actionLoading === `send-${invoice.id}`}
-                        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-70"
+                        disabled={isPaid || actionLoading === `send-${invoice.id}`}
+                        title={isPaid ? "Paid invoices cannot be sent" : undefined}
+                        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {actionLoading === `send-${invoice.id}`
                           ? "Sending..."
@@ -255,8 +322,9 @@ export default function Invoices() {
                       </button>
                       <button
                         onClick={() => deleteInvoice(invoice.id)}
-                        disabled={actionLoading === `delete-${invoice.id}`}
-                        className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-70"
+                        disabled={isPaid || actionLoading === `delete-${invoice.id}`}
+                        title={isPaid ? "Paid invoices cannot be deleted" : undefined}
+                        className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {actionLoading === `delete-${invoice.id}`
                           ? "Deleting..."
@@ -264,7 +332,8 @@ export default function Invoices() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {filteredInvoices.length === 0 && (
                   <tr>
                     <td
@@ -278,6 +347,7 @@ export default function Invoices() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

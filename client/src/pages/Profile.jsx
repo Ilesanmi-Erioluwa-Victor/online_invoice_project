@@ -69,18 +69,18 @@ export default function Profile() {
   }
 
   if (loading) {
-    return <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">Loading profile...</div>;
+    return <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">Loading profile...</div>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
         <p className="text-sm text-gray-600">Manage your business name and payment details.</p>
       </div>
       {message && <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">{message}</div>}
       {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="text-sm font-medium text-gray-700">Full Name</label>

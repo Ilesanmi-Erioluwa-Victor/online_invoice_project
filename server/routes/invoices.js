@@ -1,11 +1,11 @@
 const express = require('express');
 const axios = require('axios');
-const nodemailer = require('nodemailer');
 const prisma = require('../lib/prisma');
 const authMiddleware = require('../middleware/auth');
 const generateInvoicePDF = require('../utils/generateInvoicePDF');
 const sendOverdueReminders = require('../utils/sendOverdueReminders');
 const sendReceipt = require('../utils/sendReceipt');
+const { createMailTransport, getFromAddress, getMailErrorMessage } = require('../utils/mailer');
 
 const router = express.Router();
 
@@ -305,14 +305,23 @@ router.put('/:id/status', async (req, res) => {
 // DELETE /api/invoices/:id deletes an invoice and its line items through database cascade rules.
 router.delete('/:id', async (req, res) => {
   try {
-    // This Prisma query deletes Invoice records only when the id and authenticated owner match.
-    const result = await prisma.invoice.deleteMany({
+    const invoice = await prisma.invoice.findFirst({
       where: { id: Number(req.params.id), user_id: req.user.id },
+      select: { id: true, status: true },
     });
 
-    if (result.count === 0) {
+    if (!invoice) {
       return res.status(404).json({ message: 'Invoice not found' });
     }
+
+    if (invoice.status === 'paid') {
+      return res.status(400).json({ message: 'Paid invoices cannot be deleted' });
+    }
+
+    // This Prisma query deletes Invoice records only when the id and authenticated owner match.
+    await prisma.invoice.deleteMany({
+      where: { id: Number(req.params.id), user_id: req.user.id },
+    });
 
     return res.json({ message: 'Invoice deleted successfully' });
   } catch (error) {
@@ -327,6 +336,10 @@ router.post('/:id/send', async (req, res) => {
 
     if (!invoice) {
       return res.status(404).json({ message: 'Invoice not found' });
+    }
+
+    if (invoice.status === 'paid') {
+      return res.status(400).json({ message: 'Paid invoices cannot be sent to clients' });
     }
 
     const businessName = invoice.business_name || invoice.full_name;
@@ -352,16 +365,10 @@ router.post('/:id/send', async (req, res) => {
       </div>
     `;
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const transporter = createMailTransport();
 
     await transporter.sendMail({
-      from: `"${businessName}" <${process.env.EMAIL_USER}>`,
+      from: getFromAddress(businessName),
       to: invoice.client_email,
       subject: `Invoice #${invoice.invoice_number} from ${businessName}`,
       html,
@@ -370,9 +377,8 @@ router.post('/:id/send', async (req, res) => {
 
     return res.json({ message: 'Invoice sent successfully' });
   } catch (error) {
-    return res.status(500).json({ message: 'Could not send invoice email', error: error.message });
+    return res.status(500).json({ message: 'Could not send invoice email', error: getMailErrorMessage(error) });
   }
 });
 
 module.exports = router;
-
