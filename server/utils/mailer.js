@@ -1,62 +1,43 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require("resend");
 
-const MAIL_TIMEOUTS = {
-  connectionTimeout: Number(process.env.EMAIL_CONNECTION_TIMEOUT_MS || 10000),
-  greetingTimeout: Number(process.env.EMAIL_GREETING_TIMEOUT_MS || 10000),
-  socketTimeout: Number(process.env.EMAIL_SOCKET_TIMEOUT_MS || 20000),
-  dnsTimeout: Number(process.env.EMAIL_DNS_TIMEOUT_MS || 10000),
-};
-
-function getMailAuth() {
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-
-  if (!user || !pass) {
-    throw new Error('Email is not configured. Set EMAIL_USER and EMAIL_PASS, or SMTP_USER and SMTP_PASS.');
-  }
-
-  return { user, pass };
-}
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function getFromAddress(displayName) {
-  const auth = getMailAuth();
-  return `"${displayName || 'Invoice System'}" <${auth.user}>`;
+  // Until you verify a domain, Resend only allows this sender address
+  return `${displayName || "Invoice System"} <onboarding@resend.dev>`;
+}
+
+async function sendMail({ from, to, subject, html, attachments }) {
+  const result = await resend.emails.send({
+    from: from || getFromAddress(),
+    to,
+    subject,
+    html,
+    attachments: attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content, // Buffer is accepted directly
+    })),
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result;
 }
 
 function createMailTransport() {
-  const auth = getMailAuth();
-  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
-  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 465);
-
-  if (host) {
-    return nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth,
-      family: 4,
-      ...MAIL_TIMEOUTS,
-    });
-  }
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth,
-    family: 4,
-    ...MAIL_TIMEOUTS,
-  });
+  // Returns a nodemailer-compatible shaped object so existing call sites don't break
+  return {
+    sendMail,
+  };
 }
 
 function getMailErrorMessage(error) {
-  if (['ETIMEDOUT', 'ESOCKET', 'ECONNECTION'].includes(error.code) || /timeout/i.test(error.message)) {
-    return 'Email server connection timed out. Check the production SMTP host, port, and network access.';
+  if (/timeout/i.test(error.message)) {
+    return "Email server connection timed out.";
   }
-
-  if (['EAUTH', 'EENVELOPE'].includes(error.code)) {
-    return error.message;
-  }
-
-  return error.message || 'Email delivery failed';
+  return error.message || "Email delivery failed";
 }
 
 module.exports = {
