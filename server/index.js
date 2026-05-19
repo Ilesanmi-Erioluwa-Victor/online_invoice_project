@@ -6,7 +6,6 @@ const cron = require("node-cron");
 const initDB = require("./db/init");
 const authMiddleware = require("./middleware/auth");
 const sendOverdueReminders = require("./utils/sendOverdueReminders");
-
 const authRoutes = require("./routes/auth");
 const clientRoutes = require("./routes/clients");
 const invoiceRoutes = require("./routes/invoices");
@@ -16,6 +15,7 @@ const profileRoutes = require("./routes/profile");
 const reportRoutes = require("./routes/reports");
 
 const app = express();
+
 // Render assigns PORT automatically, while local development falls back to 5000.
 const PORT = process.env.PORT || 5000;
 
