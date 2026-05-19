@@ -164,12 +164,10 @@ router.get("/:id/pdf", async (req, res) => {
     );
     return res.send(pdfBuffer);
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: "Could not generate invoice PDF",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "Could not generate invoice PDF",
+      error: error.message,
+    });
   }
 });
 
@@ -194,11 +192,9 @@ router.post("/", async (req, res) => {
     !Array.isArray(items) ||
     items.length === 0
   ) {
-    return res
-      .status(400)
-      .json({
-        message: "Client, dates, and at least one line item are required",
-      });
+    return res.status(400).json({
+      message: "Client, dates, and at least one line item are required",
+    });
   }
 
   try {
@@ -343,12 +339,10 @@ router.put("/:id/status", async (req, res) => {
 
     return res.json(updatedInvoice);
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: "Could not update invoice status",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "Could not update invoice status",
+      error: error.message,
+    });
   }
 });
 
@@ -384,7 +378,6 @@ router.delete("/:id", async (req, res) => {
 });
 
 // POST /api/invoices/:id/send emails the selected invoice to the client's email address with a PDF attachment.
-// POST /api/invoices/:id/send emails the selected invoice to the client's email address with a PDF attachment.
 router.post("/:id/send", async (req, res) => {
   try {
     const invoice = await fetchInvoiceForUser(req.params.id, req.user.id);
@@ -411,6 +404,7 @@ router.post("/:id/send", async (req, res) => {
             amount: Math.round(Number(invoice.total) * 100),
             currency: "NGN",
             reference: invoice.invoice_number,
+            callback_url: `https://online-invoice-project.vercel.app/payment-success?ref=${invoice.invoice_number}`,
             metadata: {
               invoice_id: invoice.id,
               invoice_number: invoice.invoice_number,
@@ -483,12 +477,10 @@ router.post("/:id/send", async (req, res) => {
 
     return res.json({ message: "Invoice sent successfully" });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: "Could not send invoice email",
-        error: getMailErrorMessage(error),
-      });
+    return res.status(500).json({
+      message: "Could not send invoice email",
+      error: getMailErrorMessage(error),
+    });
   }
 });
 

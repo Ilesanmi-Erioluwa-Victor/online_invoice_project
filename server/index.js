@@ -30,6 +30,11 @@ app.post(
   express.raw({ type: "application/json" }),
   paystackWebhookHandler,
 );
+
+app.get("/api/webhooks/paystack", (req, res) => {
+  res.sendStatus(200);
+});
+
 app.use(express.json());
 
 // GET / confirms that the backend API is online and returns a simple status message.

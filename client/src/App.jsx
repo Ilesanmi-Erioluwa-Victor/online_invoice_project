@@ -11,6 +11,7 @@ import PayInvoice from "./pages/PayInvoice";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import Reports from "./pages/Reports";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 function ProtectedLayout({ children }) {
   return (
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/pay/:invoice_number" element={<PayInvoice />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route
         path="/dashboard"
         element={
