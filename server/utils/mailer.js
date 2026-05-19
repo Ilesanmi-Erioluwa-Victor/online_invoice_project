@@ -1,41 +1,67 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const OAuth2 = google.auth.OAuth2;
 
-function getFromAddress(displayName) {
-  // Until you verify a domain, Resend only allows this sender address
-  return `${displayName || "Invoice System"} <onboarding@resend.dev>`;
-}
+async function createOAuth2Transport() {
+  const oauth2Client = new OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    "https://developers.google.com/oauthplayground",
+  );
 
-async function sendMail({ from, to, subject, html, attachments }) {
-  const result = await resend.emails.send({
-    from: from || getFromAddress(),
-    to,
-    subject,
-    html,
-    attachments: attachments?.map((a) => ({
-      filename: a.filename,
-      content: a.content, // Buffer is accepted directly
-    })),
+  oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
   });
 
-  if (result.error) {
-    throw new Error(result.error.message);
+  const accessTokenResponse = await oauth2Client.getAccessToken();
+  const accessToken = accessTokenResponse.token;
+
+  if (!accessToken) {
+    throw new Error(
+      "Failed to obtain Gmail OAuth2 access token. Check your credentials and refresh token.",
+    );
   }
 
-  return result;
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.EMAIL_USER,
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_CLIENT_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      accessToken,
+    },
+  });
+}
+
+function getFromAddress(displayName) {
+  const user = process.env.EMAIL_USER;
+  if (!user) {
+    throw new Error("EMAIL_USER is not set.");
+  }
+  return `"${displayName || "Invoice System"}" <${user}>`;
 }
 
 function createMailTransport() {
-  // Returns a nodemailer-compatible shaped object so existing call sites don't break
   return {
-    sendMail,
+    async sendMail(options) {
+      const transporter = await createOAuth2Transport();
+      return transporter.sendMail(options);
+    },
   };
 }
 
 function getMailErrorMessage(error) {
-  if (/timeout/i.test(error.message)) {
+  if (
+    ["ETIMEDOUT", "ESOCKET", "ECONNECTION"].includes(error.code) ||
+    /timeout/i.test(error.message)
+  ) {
     return "Email server connection timed out.";
+  }
+  if (["EAUTH", "EENVELOPE"].includes(error.code)) {
+    return error.message;
   }
   return error.message || "Email delivery failed";
 }
